@@ -1,0 +1,78 @@
+socket.on("timkiemuser", function(data){
+		var arr = [];
+		var userName = data.userName;
+		var nam = data.dateOfBirth;
+		
+		var sapxep = function(arr){
+			//Todo sap xep
+			
+			
+		};
+		
+		
+		
+		var count = function(arr,rows){
+			if(arr.length == rows.length){
+				sapxep(arr);
+			}
+		};
+		
+		
+		var queryString = "select * from user";
+		connection.query(queryString, function(err, rows, fields){
+			if(err){
+				
+			}else{
+				if(rows.length == 0){	
+					
+				}else{
+					for(var i = 0; i < rows.length ; i++){
+						nam = getLunarYearFromSolar(parseInt(nam[0]), parseInt(nam[1]), parseInt(nam[2]), 7.0);
+						nu = getLunarYearFromSolar(parseInt(nu[0]), parseInt(nu[1]), parseInt(nu[2]), 7.0);
+						
+						var options = {
+								host: 'api.xalovansu.com',
+								port: 80,
+								path: "/tuVi/luongDuyenVoChong/xem/gioitinh/nam/namsinhnam/"+nam+"/namsinhnu/"+nu+"/key/tviapp@)!@",
+								method: 'GET'
+							};	
+						console.log(options);
+						//console.log(options);
+						var requestSend = http1.request(options, function(response){
+							var buffer = new Buffer(0);
+							response.on('data', function(d) {	
+								buffer = Buffer.concat([buffer, d]);
+							});
+							response.on("end", function(){
+								var data = buffer.toString();
+								parseString(data, function (err, result) {
+									if(err){
+										socket.emit("dohoptuvi", { "doHopTuVi":[] });
+									}else{								
+										var item = result.tamlinh.tuvi[0].root[0].data[0].item;
+										var doHopTuVi = {
+														"userName": item[0].value[0],
+														"ketLuan": item[1].value[0]
+														};
+										arr.push(doHopTuVi);
+										count(arr,rows);
+									}
+								});
+							});
+							response.on("error", function(err){
+								socket.emit("dohoptuvi", { "doHopTuVi":[] });
+								push(null);
+								count(arr,rows);
+							});
+
+						});
+
+						requestSend.end();
+						requestSend.on("error", function(err){
+							socket.emit("dohoptuvi", { "doHopTuVi":[] });
+						});
+					}
+				}	
+			}
+		});
+	});
